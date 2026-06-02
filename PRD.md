@@ -79,7 +79,7 @@ After Finance Hub ships, Maya logs in, sees her net worth and this month's cash 
 ### Non-goals (explicitly out of scope for MVP)
 - Real bank connections / Plaid / open banking.
 - Live/real-time market data as a requirement.
-- Payment processing or real billing (a pricing section on the landing page is presentational only).
+- Payment processing, billing, or paid plans (the product is free; no pricing section).
 - Tax planning, regulated financial advice, multi-currency FX.
 - Multi-user households, sharing, roles/permissions.
 - Native mobile apps.
@@ -110,7 +110,7 @@ This MVP is "done" when **all** of the following are demonstrably true:
 
 ```
 Public
-  └─ Landing page (marketing, value prop, dashboard preview, features, trust, pricing, FAQ, CTA)
+  └─ Landing page (marketing, value prop, dashboard preview, features, trust, FAQ, CTA — free, no pricing)
   └─ Auth (sign up / log in / log out)
 
 Protected app (requires session)
@@ -132,10 +132,10 @@ Each area lists **user stories** and **acceptance criteria** (AC). Requirements 
 ### 7.1 Landing page `[M]`
 **Story:** As a visitor, I understand what Finance Hub is and why I'd want it within seconds, and I can sign up.
 
-- **AC1** Sections present: hero with headline + CTA, value proposition, **dashboard preview** (real-looking screenshot/visual), feature highlights, trust/security section, pricing/plans section (presentational), FAQ, footer CTA.
+- **AC1** Sections present: hero with headline + CTA, value proposition, **dashboard preview** (real-looking screenshot/visual), feature highlights, trust/security section, FAQ, footer CTA.
 - **AC2** Feels premium, trustworthy, calm, modern — consistent with the in-app design language.
 - **AC3** Fully responsive; primary CTA routes to sign up.
-- **AC4** Pricing tiers render but "Choose plan" leads to sign up (no real payment). `[S]`
+- **AC4** **Finance Hub is free** — a simple "free, no credit card" callout near the CTA; no pricing tiers or payment.
 
 ### 7.2 Authentication `[M]`
 **Story:** As a user, I can create an account and log in, and I can't reach the app while logged out.
@@ -147,6 +147,8 @@ Each area lists **user stories** and **acceptance criteria** (AC). Requirements 
 
 ### 7.3 Dashboard `[M]`
 **Story:** As a user, I open one screen and immediately understand my financial standing and trend.
+
+**Time scope:** the dashboard has a **period selector** with presets — *This month* (default), *Last 30 days*, *Last 3 months*, *Year to date*, and *All time* — plus a custom range. Period-sensitive metrics (income, expenses, cash flow, savings rate, spending-by-category) respect the selection; balance-type metrics (net worth, cash, investments, debt) reflect current state.
 
 **Metric cards (computed from data):**
 - Total net worth, Cash balance, Monthly income, Monthly expenses, Monthly cash flow, Savings rate, Subscription spend (monthly), Investment value, Total debt.
@@ -165,7 +167,7 @@ Each area lists **user stories** and **acceptance criteria** (AC). Requirements 
 ### 7.4 Transactions `[M]`
 **Story:** As a user, I manage my income and expenses and trust that they power the rest of the app.
 
-- **Fields:** description, amount, type (`income` | `expense`), category, account, date, notes.
+- **Fields:** description, amount, type (`income` | `expense`), category, **account (required link to an Account, §7.6)**, date, notes.
 - **Categories (seed list):** Salary, Rent, Groceries, Restaurants, Transport, Shopping, Subscriptions, Investments, Travel, Health, Utilities, Insurance, Other.
 - **AC1** Full CRUD with a clean form (modal or side panel) and inline validation.
 - **AC2** **Search** by description; **filter** by type, category, account, and date range.
@@ -183,16 +185,17 @@ Each area lists **user stories** and **acceptance criteria** (AC). Requirements 
 - **AC3** Upcoming renewals surface here and on the dashboard.
 - **AC4** Active-subscription monthly spend feeds the dashboard "Subscription spend" card.
 
-### 7.6 Net Worth (Assets & Debts) `[M]`
+### 7.6 Net Worth (Assets, Accounts & Debts) `[M]`
 **Story:** As a user, I record what I own and owe and see my net worth and its trend.
 
-- **Asset types:** checking, savings, cash, stocks, ETFs, crypto, retirement, property, other.
+- **Accounts as cash assets:** the **first-class `Account` entity** (checking / savings / cash) that transactions link to (§7.4) **doubles as a cash asset** — an account's balance counts toward total assets and the "cash balance" card. Non-cash assets (property, retirement, etc.) are tracked as standalone Assets.
+- **Asset types:** checking, savings, cash *(via Accounts)*; stocks, ETFs, crypto *(via Investments, §7.7)*; retirement, property, other *(standalone Assets)*.
 - **Liability types:** credit card, car loan, student loan, mortgage, personal loan, other.
-- **Computed:** total assets, total liabilities, **net worth = assets − liabilities**, net worth over time.
-- **AC1** Full CRUD for assets and liabilities (name, type, value/balance, notes).
+- **Computed:** total assets (accounts + standalone assets + investment value), total liabilities, **net worth = assets − liabilities**, net worth over time.
+- **AC1** Full CRUD for accounts, standalone assets, and liabilities (name, type, value/balance, notes).
 - **AC2** Net worth recalculates live as items change.
-- **AC3** Net-worth-over-time chart driven by monthly **net worth snapshots** (see §8.4 and §10); demo data seeds 6 months of history.
-- **AC4** "Cash balance" dashboard card = sum of cash-like asset types (checking + savings + cash).
+- **AC3** Net-worth-over-time chart is **computed live on read** from current balances and reconstructed monthly cash-flow deltas from transaction history (no stored snapshot table — see §8.4); demo data's 6 months of transactions produce a believable curve.
+- **AC4** "Cash balance" dashboard card = sum of all Account balances (checking + savings + cash).
 
 ### 7.7 Investments `[M]`
 **Story:** As a user, I see a simple portfolio: what I hold, what it's worth, and my gain/loss.
@@ -234,7 +237,7 @@ Rule-based (no AI). Generated from the user's data. Examples:
 
 - **AC1** A **"Load demo data"** action seeds the current account with a coherent financial story.
 - **AC2** A **"Reset demo data"** action clears the user's data back to empty (with confirm).
-- **AC3** Demo dataset includes: ~6 months of transactions (salary, rent, groceries, restaurants, transport, utilities, subscriptions, health, travel); active subscriptions; checking + savings accounts; stock + ETF + crypto holdings; credit card debt + car loan; and **6 months of net worth snapshots**.
+- **AC3** Demo dataset includes: ~6 months of transactions (salary, rent, groceries, restaurants, transport, utilities, subscriptions, health, travel) — which **drive the live-computed net worth trend** (§8.4); active subscriptions; checking + savings accounts; stock + ETF + crypto holdings; credit card debt + car loan.
 - **AC4** After loading, every dashboard metric, chart, and insight is populated and believable.
 - **AC5** Demo data is generated **per-user and owned by that user** (not global), so it round-trips through the same CRUD + calculation paths as real data.
 
@@ -257,14 +260,15 @@ All figures derive from the user's records. "Current month" = calendar month of 
 - `upcomingRenewals = subscriptions where nextRenewal ∈ [now, now+30d]`
 
 ### 8.3 Assets, debts, net worth
-- `totalAssets      = Σ asset.value`
+- `cashBalance      = Σ account.balance` (all Accounts: checking + savings + cash)
+- `totalAssets      = cashBalance + Σ standaloneAsset.value + portfolioValue`
 - `totalLiabilities = Σ liability.balance`
 - `netWorth         = totalAssets − totalLiabilities`
-- `cashBalance      = Σ asset.value where type ∈ {checking, savings, cash}`
 
-### 8.4 Net worth over time
-- Store a **monthly `NetWorthSnapshot`** (`userId`, `month`, `totalAssets`, `totalLiabilities`, `netWorth`).
-- Dashboard "net worth over time" reads snapshots; demo seed creates 6 trailing months; (a lightweight job/manual recompute can append the current month).
+### 8.4 Net worth over time (computed live, no snapshots)
+- No `NetWorthSnapshot` table. The trend is **reconstructed on read**: start from the **current** `netWorth`, then walk backward month over month subtracting each month's net cash flow (`monthlyIncome − monthlyExpenses` from transactions) to estimate prior-month net worth.
+- `netWorth[m-1] = netWorth[m] − netCashFlow(month m)`; produce a series for the selected range (default trailing 6 months).
+- This keeps history "computed, not hardcoded," and demo data's 6 months of transactions yield a believable curve. *(Trade-off: the curve reflects cash-flow movement, not historical asset price/value changes — acceptable for the MVP.)*
 
 ### 8.5 Investments
 - per holding: `currentValue = quantity × currentPrice`; `costBasis = quantity × avgCost`; `gainLoss = currentValue − costBasis`; `gainLossPct = costBasis > 0 ? gainLoss / costBasis : 0`.
@@ -297,20 +301,21 @@ All figures derive from the user's records. "Current month" = calendar month of 
 ## 10. Data model (concise)
 
 ```
-User            id, name, email, passwordHash(better-auth), currency,
-                monthlySalary, savingsTarget, createdAt
-Account         id, userId, name, type (checking|savings|cash|...), createdAt   // optional grouping for transactions
-Transaction     id, userId, description, amount, type (income|expense),
-                category, accountId?, date, notes, createdAt
-Subscription    id, userId, name, cost, billingCycle, category, status,
-                nextRenewal, paymentMethod, createdAt
-Asset           id, userId, name, type, value, notes, createdAt
-Liability       id, userId, name, type, balance, notes, createdAt
-Holding         id, userId, name, ticker, assetType (stock|etf|crypto),
-                quantity, avgCost, currentPrice, prevClose?, createdAt
-NetWorthSnapshot id, userId, month, totalAssets, totalLiabilities, netWorth
+User          id, name, email, passwordHash(better-auth), currency,
+              monthlySalary, savingsTarget, createdAt
+Account       id, userId, name, type (checking|savings|cash), balance, createdAt
+              // first-class; counts as a cash asset for net worth
+Transaction   id, userId, description, amount, type (income|expense),
+              category, accountId (required → Account), date, notes, createdAt
+Subscription  id, userId, name, cost, billingCycle, category, status,
+              nextRenewal, paymentMethod, createdAt
+Asset         id, userId, name, type (retirement|property|other), value, notes, createdAt
+              // standalone non-cash assets only; cash lives in Account, market assets in Holding
+Liability     id, userId, name, type, balance, notes, createdAt
+Holding       id, userId, name, ticker, assetType (stock|etf|crypto),
+              quantity, avgCost, currentPrice, prevClose?, createdAt
 ```
-Every record is owned by `userId`; all queries filter by the session user. (Final schema lives in `prisma/schema.prisma` at build time.)
+No net-worth snapshot table — the trend is computed live (§8.4). Every record is owned by `userId`; all queries filter by the session user. (Final schema lives in `prisma/schema.prisma` at build time.)
 
 ---
 
@@ -349,8 +354,10 @@ Every record is owned by `userId`; all queries filter by the session user. (Fina
 | Investments | Static mock prices in DB | Looks like a real tracker without a market-data dependency. |
 | Charts | Recharts | One consistent, React-friendly charting lib. |
 | Money storage | Integer minor units / Decimal | Avoids float rounding errors in financial sums. |
-| Net worth history | Monthly snapshots table | Enables the trend chart without recomputing history on the fly. |
-| Pricing/Stripe | Landing-page section only, not wired | Stripe tooling exists in env, but payments are a non-goal for MVP. |
+| Net worth history | Computed live from balances + transaction cash flow (no snapshots) | Simpler schema; "computed not hardcoded." Trade-off: reflects cash flow, not asset-value history. |
+| Dashboard period | Flexible range with presets (This month default, Last 30d, Last 3m, YTD, All time, custom) | More useful/demoable; balance metrics stay current-state. |
+| Accounts | First-class `Account` entity; transactions require an account; accounts double as cash assets | One source of truth for cash; cleaner net-worth math. |
+| Pricing | None — product is free, no tiers or payment | Removes Stripe/billing scope entirely for the MVP. |
 | Deployment | Vercel + hosted Postgres | Default assumption; trivially swappable. |
 
 ---
@@ -367,10 +374,14 @@ Every record is owned by `userId`; all queries filter by the session user. (Fina
 
 ## 15. Open questions
 
-1. **Period selector:** dashboard fixed to "current month," or allow switching month/range? *(Default: current month; range is `[C]`.)*
-2. **Accounts model:** do transactions need a first-class `Account` entity, or is a free-text account label enough for MVP? *(Default: lightweight `Account` table, optional link.)*
-3. **Net worth snapshot cadence:** seed-only for demo, or also auto-append the current month for live accounts? *(Default: seed + manual/recompute on view.)*
-4. **Landing pricing tiers:** how many tiers and what names? *(Default: Free / Plus / Pro, presentational.)*
+All initial open questions are **resolved** (see §13 Key decisions):
+
+1. ~~Period selector~~ → **Resolved:** flexible range with presets (This month default).
+2. ~~Accounts model~~ → **Resolved:** first-class `Account` entity; transactions require an account; accounts double as cash assets.
+3. ~~Net worth snapshot cadence~~ → **Resolved:** no snapshots; net worth trend computed live from balances + transaction cash flow.
+4. ~~Landing pricing tiers~~ → **Resolved:** none; the product is free.
+
+*No open questions remain. New questions surfaced during the build will be logged here.*
 
 ---
 
@@ -380,7 +391,7 @@ Every record is owned by `userId`; all queries filter by the session user. (Fina
 
 **Are the stock/crypto prices live?** No — prices are realistic mock values stored in the app, so the portfolio behaves like a real tracker without a market-data dependency.
 
-**Can I actually pay for a plan?** Not in the MVP. The pricing section is presentational; choosing a plan takes you to sign up.
+**What does it cost?** Nothing — Finance Hub is free, with no plans or payment in the MVP.
 
 **Does it handle multiple currencies?** You pick one display currency in Settings. There's no FX conversion in the MVP.
 
