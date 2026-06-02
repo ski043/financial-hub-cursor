@@ -1,443 +1,311 @@
 # Finance Hub — Product Requirements Document
 
+> **“Your complete financial life in one dashboard.”**
 
-|                       |                                                                                                                                          |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **Status**            | Draft v1 — ready to build                                                                                                                |
-| **Author**            | Jan Marshal                                                                                                                              |
-| **Last updated**      | June 2, 2026                                                                                                                             |
-| **Target MVP launch** | "Demo Day" — a clickable, video-ready build                                                                                              |
-| **One-line pitch**    | Your entire financial life — income, spending, subscriptions, assets, debts, investments, and net worth — in one calm, modern dashboard. |
-
-
----
-
-## 1. TL;DR
-
-Finance Hub is a full-stack personal finance dashboard that lets an everyday person see their **complete financial picture in one place** and answer the question *"Am I doing okay?"* in under ten seconds.
-
-The MVP is a **real, working app** — not a static mockup. Users sign up, manage their own transactions, subscriptions, assets, debts, and investments, and watch the dashboard, charts, and insights recompute from that data. A one-click **"Load demo data"** button instantly populates six months of realistic financial history so the product looks alive on first open and demos cleanly on video.
-
-We are intentionally **not** building bank integrations, live market data, payments, tax tooling, or compliance. The bar is "feels like a real consumer fintech product you'd happily click through," scoped tightly enough to build fast.
+| | |
+|---|---|
+| **Status** | Draft v1 |
+| **Author** | janmarshal |
+| **Last updated** | 2026-06-02 |
+| **Primary goal** | Benchmark-first: a realistic, premium consumer-finance app used to evaluate coding agents (Cursor, Claude Code, Codex) |
+| **Target platform** | Responsive web (desktop-first), Next.js App Router |
 
 ---
 
-## 2. Press release (working-backwards)
+## 0. Assumptions & open decisions
 
-> **FOR IMMEDIATE RELEASE**
->
-> **Finance Hub launches a calmer way to understand your money — all of it, in one place.**
->
-> Today we're releasing Finance Hub, a personal finance dashboard that brings together everything that's normally scattered across banking apps, spreadsheets, brokerage logins, and the back of your mind.
->
-> Most people can't answer a simple question: *"How am I actually doing financially?"* Their checking balance lives in one app, their subscriptions hide on credit card statements, their investments sit in a brokerage they rarely open, and their net worth is a number they've never actually calculated. Finance Hub fixes that.
->
-> In one clean screen, Finance Hub shows your total net worth, this month's income and expenses, your cash flow and savings rate, where your money is going, which subscriptions are quietly draining you, what you own, what you owe, and whether things are trending up or down. It turns raw transactions into clear charts and plain-language insights like *"Your spending is up 18% vs last month"* or *"A €240 subscription renews in 3 days."*
->
-> "We didn't want another intimidating accounting tool," said the team. "We wanted the feeling of finally seeing the whole board — calm, clear, and honest."
->
-> Finance Hub is available today. Create an account, load a demo workspace to explore in seconds, or start adding your own numbers and watch your financial picture come to life.
+These are working defaults. Each is cheap to change; flag any you disagree with.
 
-**Why this works as our north star:** if the dashboard doesn't make a stranger go *"oh, I get it"* within ten seconds, we've missed.
+| # | Decision | Default | Alternatives |
+|---|----------|---------|--------------|
+| A1 | App purpose | Benchmark-first, but must *feel* like a shippable product | Product-first; pure throwaway benchmark |
+| A2 | Data source | Seeded realistic demo data + manual add/edit | CSV import; Plaid/Teller live aggregation |
+| A3 | Auth | Multi-user, email + password, one seeded demo user | OAuth; single no-auth demo |
+| A4 | Stack | Next.js (App Router) + Prisma + Postgres + Tailwind + shadcn/ui | SQLite; Supabase; different framework |
+| A5 | Insights engine | Rule-based / computed in v1 | Light AI summaries (fast-follow); full AI chat |
+| A6 | Monetization | Out of scope for v1 | Stripe premium tier (future) |
+| A7 | Currency | Single currency per user (default USD) — **cosmetic display only, never converted** | Multi-currency with FX |
 
 ---
 
-## 3. Problem & context
+## 1. Problem & context (the why)
 
-### The problem
+People's money lives in fragments: a checking account in one app, a credit card in another, a brokerage somewhere else, subscriptions buried in email receipts, and debt on a statement they avoid opening. The result is that **most people cannot answer basic questions about their own finances** without a painful manual reconciliation:
 
-A normal person's financial life is **fragmented and invisible**:
+- How much money do I have right now?
+- How much came in this month, and how much went out?
+- Where is my money actually going?
+- What am I paying for in recurring subscriptions?
+- What do I own (assets, investments) and what do I owe (debts)?
+- What is my net worth — and is it trending up or down?
 
-- **Balances** are split across checking, savings, and cash.
-- **Spending** is buried in transaction history nobody reviews.
-- **Subscriptions** silently recur and accumulate.
-- **Investments & crypto** sit in separate apps.
-- **Debts** (credit cards, car loans, student loans) are felt but rarely totaled.
-- **Net worth** — the single most honest financial number — is almost never calculated.
-
-The result: people *feel* anxious or fine, but they don't *know*. There's no single, friendly place that says "here's where you stand, and here's the trend."
+Existing tools (Mint, Monarch, Copilot) prove the demand, but they are either shutting down, expensive, or over-complicated. There is room for a **calm, premium overview** that answers the questions above at a glance.
 
 ### Why now
 
-1. **The build is the point.** This project is an end-to-end exercise to prove a coding agent can ship a real full-stack product — product structure, data modeling, CRUD, auth, dashboard math, charts, responsive design, seed data, and useful financial logic — not a toy.
-2. **Foundation for a real product.** This is also an early, deliberate step toward something potentially launchable, so the data model and architecture should be sound enough to grow on, even if features are scoped to an MVP.
-3. **The tooling moment.** A modern stack (Next.js App Router, Prisma, shadcn/ui, better-auth) makes a polished, real-data fintech UI achievable quickly — so the opportunity cost of doing it "for real" instead of as a fake mockup is low.
+1. **Mint's shutdown** left millions of users actively looking for a clean personal-finance overview, validating both demand and willingness to switch.
+2. **This codebase doubles as a coding-agent benchmark.** A personal-finance dashboard is the ideal stress test: it is universally understood (so correctness is easy to judge), yet genuinely non-trivial — it requires real data modeling, money math, aggregation, charts, state management, auth, and polished UI. That makes it a fair, repeatable way to measure how well Cursor, Claude Code, and Codex build a real product.
 
-### Who it's for
+### Why this matters as a benchmark (secondary audience)
 
-**Primary persona — "Maya, the organized-but-overwhelmed earner."** Has a salary, rent, a pile of subscriptions, a checking + savings account, some index funds and a little crypto, plus a credit card balance and a car loan. She's financially curious but doesn't want a spreadsheet or an accountant. She wants **one screen that tells the truth**.
-
-After Finance Hub ships, Maya logs in, sees her net worth and this month's cash flow at a glance, notices she's overspending on restaurants, spots a subscription she forgot, and feels *in control* — in minutes, not hours.
+Beyond end users, this repo is evaluated by an engineering audience asking: *can a coding agent take this PRD and produce a correct, well-architected, good-looking app?* The PRD is therefore written to be **unambiguous and executable** — clear data models, acceptance criteria, and money-math rules — so agent output can be objectively scored.
 
 ---
 
-## 4. Goals & non-goals
+## 2. Goals & non-goals
 
-### Goals (what success requires)
+### Goals
+- G1. A user can see their **complete financial picture** — net worth, cash flow, spending, subscriptions, assets, debts — in one dashboard.
+- G2. The app answers all nine "simple questions" from section 1 in **≤ 2 clicks** from the dashboard.
+- G3. The product **feels premium** (consumer fintech, not an admin panel): calm layout, clear typography, smooth interactions, dark-mode support.
+- G4. Net worth and cash flow are **trended over time** so users can see if things are improving.
+- G5. The codebase is a **fair, complete benchmark**: realistic scope, seedable data, clear acceptance criteria.
 
-- A **real, persistent, multi-section app** a user can sign up for and use.
-- **Full CRUD** (create, read, update, delete) in Transactions, Subscriptions, Assets/Debts, and Investments — and it persists.
-- **Dashboard metrics and charts computed from the user's data**, never hardcoded.
-- **One-click demo data** so the app looks alive immediately and demos beautifully on video.
-- **Polished, calm, finance-appropriate UI** that works on desktop, tablet, and mobile.
-- **Rule-based insights** that make the product feel smart without AI.
-
-### Non-goals (explicitly out of scope for MVP)
-
-- Real bank connections / Plaid / open banking.
-- Live/real-time market data as a requirement.
-- Payment processing, billing, or paid plans (the product is free; no pricing section).
-- Tax planning, regulated financial advice, multi-currency FX.
-- Multi-user households, sharing, roles/permissions.
-- Native mobile apps.
-- Production-grade security audits, compliance, advanced account management.
-- Email-based auth flows (verification, password reset emails).
-
-> These may appear as **visual placeholders** (e.g., a "Connect account" button that opens a "coming soon" modal) but must not be implemented.
+### Non-goals (v1)
+- N1. Real bank aggregation (Plaid/Teller) — manual + seeded only.
+- N2. Budgeting envelopes / goal planning (future).
+- N3. AI chat / recommendations (light AI summaries are a fast-follow, not v1).
+- N4. Bill pay, money movement, or any real financial transactions.
+- N5. Multi-currency with live FX (single currency per user).
+- N6. Mobile-native apps; tax features; shared/household accounts.
+- N7. Monetization / paywall.
 
 ---
 
-## 5. Success criteria
+## 3. Definition of success
 
-This MVP is "done" when **all** of the following are demonstrably true:
+### Product success metrics
+| Metric | Target |
+|--------|--------|
+| Time-to-first-insight | New user sees a populated, meaningful dashboard in **< 30s** (via seeded demo or quick manual entry) |
+| Question coverage | **9/9** of the section-1 questions answerable from the UI |
+| Glanceability | Core dashboard KPIs visible **above the fold** on a 1280px viewport with no scrolling |
+| Data integrity | Net worth = Σ assets − Σ debts, reconciles to the penny across every view |
+| Perceived quality | Passes a design review for "premium consumer fintech" feel (spacing, type, motion, empty states) |
 
-
-| #   | Success signal            | How we'll verify it                                                                                             |
-| --- | ------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| S1  | **Click-through realism** | A new user can navigate every section and it feels like a shipped consumer app.                                 |
-| S2  | **Persistent CRUD**       | Create/edit/delete a record in each core section; refresh; the change persists in Postgres.                     |
-| S3  | **Computed dashboard**    | Changing or deleting underlying data visibly changes dashboard metrics and charts (nothing hardcoded).          |
-| S4  | **Demo-ready**            | "Load demo data" produces a rich, believable financial picture; the full happy path records cleanly as a video. |
-| S5  | **Responsive & polished** | Layout holds up and stays usable at desktop, tablet, and mobile breakpoints.                                    |
-
-
-**Guardrail metric:** *Time-to-"I get it"* — a first-time viewer of the dashboard understands their financial standing in **≤10 seconds**.
-
----
-
-## 6. Product scope — app map
-
-```
-Public
-  └─ Landing page (marketing, value prop, dashboard preview, features, trust, FAQ, CTA — free, no pricing)
-  └─ Auth (sign up / log in / log out)
-
-Protected app (requires session)
-  ├─ Dashboard        ← the hero screen; everything summarized
-  ├─ Transactions     ← income & expenses, full CRUD + search/filter/categorize
-  ├─ Subscriptions    ← recurring spend, full CRUD + renewal math
-  ├─ Net Worth        ← assets & debts, full CRUD + net worth over time
-  ├─ Investments      ← portfolio overview, holdings, allocation, gain/loss
-  ├─ Insights         ← rule-based observations
-  └─ Settings         ← profile, currency, salary, savings target, placeholders
-```
+### Benchmark success criteria
+The build is considered a strong agent result when:
+- **Correctness:** all money math (balances, cash flow, net worth, category totals, subscription cost normalization) is exact and consistent across views.
+- **Completeness:** all v1 modules (section 5) are implemented and wired to a shared data model.
+- **Architecture:** clean separation of data layer (Prisma), domain/aggregation logic, and UI; no business logic duplicated in components.
+- **Polish:** responsive, accessible (keyboard + screen-reader basics), loading/empty/error states present.
+- **Reproducibility:** `seed` produces a realistic dataset; app runs from a clean clone with documented setup.
 
 ---
 
-## 7. Detailed requirements
+## 4. Personas
 
-Each area lists **user stories** and **acceptance criteria** (AC). Requirements use MoSCoW: **[M]ust**, **[S]hould**, **[C]ould**.
-
-### 7.1 Landing page `[M]`
-
-**Story:** As a visitor, I understand what Finance Hub is and why I'd want it within seconds, and I can sign up.
-
-- **AC1** Sections present: hero with headline + CTA, value proposition, **dashboard preview** (real-looking screenshot/visual), feature highlights, trust/security section, FAQ, footer CTA.
-- **AC2** Feels premium, trustworthy, calm, modern — consistent with the in-app design language.
-- **AC3** Fully responsive; primary CTA routes to sign up.
-- **AC4** **Finance Hub is free** — a simple "free, no credit card" callout near the CTA; no pricing tiers or payment.
-
-### 7.2 Authentication `[M]`
-
-**Story:** As a user, I can create an account and log in, and I can't reach the app while logged out.
-
-- **AC1** Sign up, log in, log out using **better-auth** with **email + password** (no email sending/verification/reset).
-- **AC2** All `/app/*` routes are **protected**; unauthenticated users are redirected to login.
-- **AC3** Each user only ever sees **their own** data (row-level ownership by `userId`).
-- **AC4** Sensible auth UX: validation errors, loading states, "already have an account?" links.
-
-### 7.3 Dashboard `[M]`
-
-**Story:** As a user, I open one screen and immediately understand my financial standing and trend.
-
-**Time scope:** the dashboard has a **period selector** with presets — *This month* (default), *Last 30 days*, *Last 3 months*, *Year to date*, and *All time* — plus a custom range. Period-sensitive metrics (income, expenses, cash flow, savings rate, spending-by-category) respect the selection; balance-type metrics (net worth, cash, investments, debt) reflect current state.
-
-**Metric cards (computed from data):**
-
-- Total net worth, Cash balance, Monthly income, Monthly expenses, Monthly cash flow, Savings rate, Subscription spend (monthly), Investment value, Total debt.
-
-**Visualizations:**
-
-- Net worth over time (line/area), Income vs expenses (bar/grouped, by month), Spending by category (donut/bar), Asset allocation (donut).
-
-**Summary widgets:**
-
-- Recent transactions (latest N), Upcoming subscription renewals, Top spending categories, Financial insights (top 2–3), Investment summary.
-- **AC1** Every number is derived from the user's records for the **current period** (see §8 for formulas); zero hardcoded values.
-- **AC2** With demo data loaded, the dashboard looks rich and believable; with an empty account, **empty states** guide the user to add data or load the demo.
-- **AC3** Charts use a single charting lib (Recharts) and are responsive.
-- **AC4** Each summary widget links to its full section.
-
-### 7.4 Transactions `[M]`
-
-**Story:** As a user, I manage my income and expenses and trust that they power the rest of the app.
-
-- **Fields:** description, amount, type (`income` | `expense`), category, **account (required link to an Account, §7.6)**, date, notes.
-- **Categories (seed list):** Salary, Rent, Groceries, Restaurants, Transport, Shopping, Subscriptions, Investments, Travel, Health, Utilities, Insurance, Other.
-- **AC1** Full CRUD with a clean form (modal or side panel) and inline validation.
-- **AC2** **Search** by description; **filter** by type, category, account, and date range.
-- **AC3** Sort by date/amount; paginated or virtualized list for long histories.
-- **AC4** Changes immediately affect dashboard metrics and charts.
-- **AC5** Amounts display in the user's selected currency (§7.9).
-
-### 7.5 Subscriptions `[M]`
-
-**Story:** As a user, I see every recurring cost and what it really adds up to.
-
-- **Fields:** name, cost, billing cycle (`monthly` | `yearly` | `weekly` | `quarterly`), category, status (`active` | `paused` | `canceled`), next renewal date, payment method/account.
-- **Computed:** monthly subscription spend (normalized across cycles), annualized spend, # active subscriptions, upcoming renewals (next 30 days), most expensive subscriptions.
-- **AC1** Full CRUD.
-- **AC2** Billing cycles are **normalized to a monthly figure** for totals (see §8).
-- **AC3** Upcoming renewals surface here and on the dashboard.
-- **AC4** Active-subscription monthly spend feeds the dashboard "Subscription spend" card.
-
-### 7.6 Net Worth (Assets, Accounts & Debts) `[M]`
-
-**Story:** As a user, I record what I own and owe and see my net worth and its trend.
-
-- **Accounts as cash assets:** the **first-class `Account` entity** (checking / savings / cash) that transactions link to (§7.4) **doubles as a cash asset** — an account's balance counts toward total assets and the "cash balance" card. Non-cash assets (property, retirement, etc.) are tracked as standalone Assets.
-- **Asset types:** checking, savings, cash *(via Accounts)*; stocks, ETFs, crypto *(via Investments, §7.7)*; retirement, property, other *(standalone Assets)*.
-- **Liability types:** credit card, car loan, student loan, mortgage, personal loan, other.
-- **Computed:** total assets (accounts + standalone assets + investment value), total liabilities, **net worth = assets − liabilities**, net worth over time.
-- **AC1** Full CRUD for accounts, standalone assets, and liabilities (name, type, value/balance, notes).
-- **AC2** Net worth recalculates live as items change.
-- **AC3** Net-worth-over-time chart is **computed live on read** from current balances and reconstructed monthly cash-flow deltas from transaction history (no stored snapshot table — see §8.4); demo data's 6 months of transactions produce a believable curve.
-- **AC4** "Cash balance" dashboard card = sum of all Account balances (checking + savings + cash).
-
-### 7.7 Investments `[M]`
-
-**Story:** As a user, I see a simple portfolio: what I hold, what it's worth, and my gain/loss.
-
-- **Fields per holding:** asset name, ticker, asset type (`stock` | `etf` | `crypto`), quantity, average cost, current price, current value, gain/loss, gain/loss %.
-- **Computed:** portfolio value, total gain/loss (abs + %), allocation by asset type, daily change (from mock price), per-holding value/gain.
-- **AC1** Full CRUD for holdings.
-- **AC2** **Current prices are static mock values stored in the DB**; `currentValue = quantity × currentPrice`, `gainLoss = currentValue − (quantity × avgCost)`.
-- **AC3** Holdings table + allocation donut + summary cards.
-- **AC4** Watchlist `[C]` and a "daily change" indicator `[S]` (derived from a stored previous-close field) if cheap to add.
-- **AC5** Total investment value feeds the dashboard "Investment value" card and the asset-allocation view.
-
-### 7.8 Insights `[M]`
-
-**Story:** As a user, I get plain-language, useful observations about my finances.
-
-Rule-based (no AI). Generated from the user's data. Examples:
-
-- Spending is higher/lower than last month (with %).
-- Savings rate this month is positive/negative (with value).
-- A large subscription renewal is coming up (name + date + amount).
-- Largest expense category this month.
-- Net worth increased/decreased over the last N months.
-- Subscription spending is trending up.
-- Investment allocation is heavily concentrated in one asset type (>X%).
-- **AC1** At least **6 distinct insight rules** implemented; each only shows when its condition is met.
-- **AC2** Insights are ranked (e.g., by severity/recency) and the top few surface on the dashboard.
-- **AC3** Each insight has an icon, a short title, and a one-line explanation; empty state when none apply.
-
-### 7.9 Settings `[M]`
-
-**Story:** As a user, I set basic preferences and the app respects them.
-
-- **Fields:** name, email (read-only or editable), **preferred currency** (drives all formatting), monthly salary, savings target, notification preferences (toggles, presentational), connected accounts placeholder, data export placeholder.
-- **AC1** Currency selection changes the display currency symbol/formatting app-wide (single currency, **no FX conversion**).
-- **AC2** Monthly salary and savings target can feed insights/targets (e.g., savings-rate vs target).
-- **AC3** Placeholders (connected accounts, export, notifications) render as believable but clearly non-functional ("coming soon").
-
-### 7.10 Demo data `[M]`
-
-**Story:** As a user (or demoer), I can fill the app with realistic data in one click, and reset it.
-
-- **AC1** A **"Load demo data"** action seeds the current account with a coherent financial story.
-- **AC2** A **"Reset demo data"** action clears the user's data back to empty (with confirm).
-- **AC3** Demo dataset includes: ~6 months of transactions (salary, rent, groceries, restaurants, transport, utilities, subscriptions, health, travel) — which **drive the live-computed net worth trend** (§8.4); active subscriptions; checking + savings accounts; stock + ETF + crypto holdings; credit card debt + car loan.
-- **AC4** After loading, every dashboard metric, chart, and insight is populated and believable.
-- **AC5** Demo data is generated **per-user and owned by that user** (not global), so it round-trips through the same CRUD + calculation paths as real data.
+- **Alex — "The Overwhelmed Optimizer" (primary).** 28–40, financially active across 4–6 accounts. Wants a single calm dashboard to answer "am I okay?" without spreadsheets. Values clarity and trend lines over granular control.
+- **Sam — "The Debt Crusher."** Focused on paying down student loans / credit cards. Lives in the Debts and Net Worth views; motivated by seeing the line go up.
+- **The Evaluator (secondary, non-end-user).** An engineer/PM scoring how faithfully a coding agent implemented this spec. Cares about correctness, architecture, and polish.
 
 ---
 
-## 8. Financial calculation logic (the part that must not be faked)
+## 5. Scope — modules & user stories
 
-All figures derive from the user's records. "Current month" = calendar month of `now` in the user's context.
+Eight modules, organized around a central dashboard. **MVP priority** is marked P0 (must-have v1) / P1 (v1 if time) / P2 (fast-follow).
 
-### 8.1 Cash flow & income/expense
+### 5.1 Overview Dashboard — P0
+The home screen. Answers the headline questions instantly.
+- KPI cards: **Net Worth**, **Cash In (month-to-date)**, **Cash Out (month-to-date)**, **Net Cash Flow**. Current-month figures are month-to-date and labeled "MTD" so a partial month isn't read as a full one.
+- Net worth trend chart (line, last 12 months).
+- Spending-by-category breakdown (donut or bar, current month).
+- Recent transactions (latest 5–8) with quick category badges.
+- Upcoming subscriptions / recurring charges (next 30 days).
+- A single "improving or getting worse?" signal (e.g., net worth vs last month, with up/down delta).
 
-- `monthlyIncome   = Σ amount where type=income  and date ∈ current month`
-- `monthlyExpenses = Σ amount where type=expense and date ∈ current month`
-- `monthlyCashFlow = monthlyIncome − monthlyExpenses`
-- `savingsRate     = monthlyIncome > 0 ? monthlyCashFlow / monthlyIncome : 0` (shown as %)
+**Stories**
+- As Alex, I open the app and immediately see my net worth and this month's in/out without clicking.
+- As Alex, I can tell at a glance whether I'm trending up or down vs last month.
 
-### 8.2 Subscriptions (normalize to monthly)
+### 5.2 Transactions — P0
+The system of record for cash flow.
+- Paginated, searchable, filterable list (by date range, account, category, type, amount).
+- Add / edit / delete a transaction (date, payee, amount, account, category, note, income vs expense).
+- Record **transfers** between two Accounts (from → to); a transfer adjusts both balances and is excluded from income/expense, cash flow, and category totals.
+- Bulk recategorization.
+- Auto-categorization on create via simple rules (payee keyword → category); user can override.
 
-- weekly → `cost × 52 / 12`; monthly → `cost`; quarterly → `cost / 3`; yearly → `cost / 12`.
-- `monthlySubscriptionSpend = Σ normalizedMonthly where status=active`
-- `annualizedSubscriptionSpend = monthlySubscriptionSpend × 12`
-- `upcomingRenewals = subscriptions where nextRenewal ∈ [now, now+30d]`
+**Stories**
+- As Alex, I can search "coffee" and see every related transaction.
+- As Alex, I can recategorize a transaction and have every total update consistently.
 
-### 8.3 Assets, debts, net worth
+### 5.3 Income & Expense Tracking — P0
+- Monthly income vs expense summary with month switcher.
+- Spending by category with month-over-month comparison.
+- Top merchants / payees.
 
-- `cashBalance      = Σ account.balance` (all Accounts: checking + savings + cash)
-- `totalAssets      = cashBalance + Σ standaloneAsset.value + portfolioValue`
-- `totalLiabilities = Σ liability.balance`
-- `netWorth         = totalAssets − totalLiabilities`
+**Stories**
+- As Alex, I can see where my money went this month vs last month.
 
-### 8.4 Net worth over time (computed live, no snapshots)
+### 5.4 Subscription Tracker — P0
+- Manually track recurring charges you add (Netflix, Spotify, gym, SaaS, etc.). A Subscription is the **single source of truth** for its recurring cost — it is *not* also entered as a Transaction, and there is no "Subscriptions" transaction category.
+- Per-subscription: name, amount, cadence (monthly/annual/weekly/quarterly), next charge date, category, status (active/paused/canceled).
+- **Normalized monthly cost** and **annualized cost** totals.
+- Active subscriptions count into Expenses/spending (smoothed by normalized monthly cost; see §7 money-math).
 
-- No `NetWorthSnapshot` table. The trend is **reconstructed on read**: start from the **current** `netWorth`, then walk backward month over month subtracting each month's net cash flow (`monthlyIncome − monthlyExpenses` from transactions) to estimate prior-month net worth.
-- `netWorth[m-1] = netWorth[m] − netCashFlow(month m)`; produce a series for the selected range (default trailing 6 months).
-- This keeps history "computed, not hardcoded," and demo data's 6 months of transactions yield a believable curve. *(Trade-off: the curve reflects cash-flow movement, not historical asset price/value changes — acceptable for the MVP.)*
+**Stories**
+- As Alex, I can see everything I'm subscribed to and my total monthly recurring spend.
+- As Alex, I can see what I'd save annually by canceling something.
 
-### 8.5 Investments
+### 5.5 Assets & Investments — P0
+Owned value is modeled by **three disjoint entities** so nothing is double-counted:
+- **Accounts** — cash only (checking, savings, cash); the balance counts as a cash asset.
+- **Holdings** — investments (stocks, ETFs, crypto): quantity × (static mock) current price. No live market data in v1.
+- **Other Assets** — non-cash, non-market items (retirement balance, real estate, vehicle, other).
+- Per-item: name, type, value (or quantity/price for Holdings), optional last-updated.
+- All three roll up into total assets / net worth, each counted exactly once.
 
-- per holding: `currentValue = quantity × currentPrice`; `costBasis = quantity × avgCost`; `gainLoss = currentValue − costBasis`; `gainLossPct = costBasis > 0 ? gainLoss / costBasis : 0`.
-- `portfolioValue = Σ currentValue`; `totalGainLoss = Σ gainLoss`; allocation = per-type share of `portfolioValue`.
+**Stories**
+- As Alex, I can list what I own and see the total value of my assets.
 
-### 8.6 Spending by category
+### 5.6 Debts / Liabilities — P0
+- Track liabilities (debts): credit card, student loan, mortgage, auto loan, personal loan, other.
+- Per-debt: name, type, current balance, APR, minimum payment, optional original amount.
+- Total debts roll up into net worth.
 
-- `categoryTotals = Σ amount grouped by category where type=expense and date ∈ current month`; "top categories" = sorted desc.
+**Stories**
+- As Sam, I can see all my debts, their balances, and total amount owed.
 
----
+### 5.7 Net Worth Tracking — P0
+- Net worth = total assets − total debts.
+- Trend over time from **monthly `NetWorthSnapshot`s**: demo data is seeded with history; for real users the current month's snapshot is **captured/upserted on dashboard view** (no cron), so history accrues going forward. **No pre-signup backfill** — until months accumulate, the chart shows a short series with an empty-state hint. Snapshots store the *true* net worth at capture time (so the trend reflects market/asset revaluation, not a cash-flow estimate). See ADR-0001.
+- Breakdown view: assets vs debts composition.
 
-## 9. Tech architecture
+**Stories**
+- As Sam, I can watch my net worth climb month over month.
 
+### 5.8 Financial Insights — P1
+Rule-based in v1 (no AI). Surfaces computed observations.
+- "Spending up X% vs last month in {category}."
+- "Net worth {up/down} ${amount} this month."
+- "{N} subscriptions cost ${total}/mo; largest is {name} at ${amount}/mo."
+- "Largest expense this month: {payee}."
+- Overall health signal: improving / stable / declining.
 
-| Layer          | Choice                                                                                |
-| -------------- | ------------------------------------------------------------------------------------- |
-| Framework      | **Next.js 16 (App Router)**, React Server Components + Server Actions for mutations   |
-| Language       | TypeScript (strict)                                                                   |
-| Styling/UI     | **TailwindCSS + shadcn/ui**                                                           |
-| Charts         | **Recharts** (single charting lib for consistency)                                    |
-| Auth           | **better-auth** — email + password, session-based; no email sending                   |
-| ORM            | **Prisma**                                                                            |
-| Database       | **PostgreSQL** (hosted, e.g. Neon/Supabase Postgres in prod; local Postgres in dev)   |
-| Validation     | Zod (shared client/server schemas)                                                    |
-| Deployment     | Vercel (app) + hosted Postgres *(assumption — easily changed)*                        |
-| Money handling | Store amounts as integer minor units or `Decimal`; format by user currency on display |
+**Stories**
+- As Alex, I get plain-language nudges about what changed and what to look at.
 
-
-**Principles:** server-side data fetching for protected pages; all mutations via Server Actions guarded by session + ownership checks; calculations live in a typed `lib/finance` module (pure functions, unit-testable) so dashboard math is single-sourced and trustworthy.
-
----
-
-## 10. Data model (concise)
-
-```
-User          id, name, email, passwordHash(better-auth), currency,
-              monthlySalary, savingsTarget, createdAt
-Account       id, userId, name, type (checking|savings|cash), balance, createdAt
-              // first-class; counts as a cash asset for net worth
-Transaction   id, userId, description, amount, type (income|expense),
-              category, accountId (required → Account), date, notes, createdAt
-Subscription  id, userId, name, cost, billingCycle, category, status,
-              nextRenewal, paymentMethod, createdAt
-Asset         id, userId, name, type (retirement|property|other), value, notes, createdAt
-              // standalone non-cash assets only; cash lives in Account, market assets in Holding
-Liability     id, userId, name, type, balance, notes, createdAt
-Holding       id, userId, name, ticker, assetType (stock|etf|crypto),
-              quantity, avgCost, currentPrice, prevClose?, createdAt
-```
-
-No net-worth snapshot table — the trend is computed live (§8.4). Every record is owned by `userId`; all queries filter by the session user. (Final schema lives in `prisma/schema.prisma` at build time.)
-
----
-
-## 11. Design direction
-
-- **Feel:** premium, trustworthy, calm, clean, modern, clear. Clarity over visual noise.
-- **System:** shadcn/ui components; a restrained finance palette (neutral base + one confident accent; semantic green/red used sparingly for gains/losses and cash flow).
-- **Patterns:** card-based dashboard; generous whitespace; tabular data with clear hierarchy; clear empty states and loading skeletons; accessible color contrast.
-- **Responsive:** mobile-first; sidebar collapses to a bottom/hamburger nav; charts and tables reflow gracefully on tablet/mobile.
-- **Motion:** subtle, purposeful (hover/press feedback, chart enter), never flashy.
+> **P2 fast-follow:** light AI layer that turns the computed insights into a short natural-language monthly summary.
 
 ---
 
-## 12. Build plan / milestones
+## 6. Information architecture & navigation
 
-1. **Foundation** — Next.js + Tailwind + shadcn + Prisma + Postgres + better-auth; protected route shell; base layout/nav.
-2. **Data layer** — schema, migrations, `lib/finance` calc module + unit tests for §8 formulas.
-3. **Core CRUD** — Transactions → Subscriptions → Assets/Debts → Investments (form + list + filters per section).
-4. **Dashboard** — wire metric cards + charts + summary widgets to computed data; empty states.
-5. **Insights** — implement ≥6 rules + ranking; surface on dashboard.
-6. **Settings** — currency, salary, savings target, placeholders.
-7. **Demo data** — seed generator + "Load/Reset demo data"; tune for a believable, video-ready picture.
-8. **Landing page** — full marketing page + auth entry points.
-9. **Polish pass** — responsive QA, loading/empty/error states, design consistency, record demo.
+- Persistent left sidebar (desktop) / bottom nav (mobile): **Dashboard, Transactions, Spending, Subscriptions, Assets, Debts, Net Worth, Insights**.
+- Global top bar: month/period selector, account filter, search, user menu.
+- Each module: header with key totals → primary visualization → detail table/list.
 
 ---
 
-## 13. Key decisions & trade-offs (living log)
+## 7. Data model (Prisma-oriented)
 
+Authoritative entity sketch. Money stored as integer **minor units (cents)** to avoid float errors; never use floats for money.
 
-| Decision          | Choice                                                                                        | Rationale / trade-off                                                                             |
-| ----------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Stack             | Next.js 16 + Prisma + Postgres + shadcn + better-auth                                         | Modern, fast to build, sound foundation for a real product.                                       |
-| Auth              | better-auth, email+password, no email                                                         | Simplest viable real auth; skips email infra for MVP.                                             |
-| Demo data         | Empty by default + "Load/Reset demo data" button                                              | Showcases instantly *and* proves real CRUD/calc paths; avoids "fake dashboard" smell.             |
-| Currency          | Single currency per user, no FX                                                               | Keeps money logic simple; FX is a known non-goal.                                                 |
-| Investments       | Static mock prices in DB                                                                      | Looks like a real tracker without a market-data dependency.                                       |
-| Charts            | Recharts                                                                                      | One consistent, React-friendly charting lib.                                                      |
-| Money storage     | Integer minor units / Decimal                                                                 | Avoids float rounding errors in financial sums.                                                   |
-| Net worth history | Computed live from balances + transaction cash flow (no snapshots)                            | Simpler schema; "computed not hardcoded." Trade-off: reflects cash flow, not asset-value history. |
-| Dashboard period  | Flexible range with presets (This month default, Last 30d, Last 3m, YTD, All time, custom)    | More useful/demoable; balance metrics stay current-state.                                         |
-| Accounts          | First-class `Account` entity; transactions require an account; accounts double as cash assets | One source of truth for cash; cleaner net-worth math.                                             |
-| Pricing           | None — product is free, no tiers or payment                                                   | Removes Stripe/billing scope entirely for the MVP.                                                |
-| Deployment        | Vercel + hosted Postgres                                                                      | Default assumption; trivially swappable.                                                          |
+- **User** — id, email, passwordHash, name, baseCurrency, expectedMonthlyIncomeCents?, savingsTargetCents?, createdAt. `expectedMonthlyIncome` and `savingsTarget` are **reference values** for onboarding/insights only — never summed into actual Income/Expenses (actual income comes from Transactions). `baseCurrency` is display-only (never converted).
+- **Account** (cash only) — id, userId, name, type (`CHECKING|SAVINGS|CASH`), institution?, openingBalanceCents, createdAt. **Current balance is derived** (= openingBalance + Σ transactions − Σ transfers out + Σ transfers in) and counts as a cash asset in net worth. See ADR-0002.
+- **Transaction** — id, userId, accountId (required), date, payee, amountCents (signed: positive = inflow, negative = outflow), type (`INCOME|EXPENSE`), categoryId, note, createdAt.
+- **Transfer** — id, userId, fromAccountId, toAccountId, amountCents (positive), date, note, createdAt. Moves money between two Accounts; adjusts both balances; **excluded from all income/expense/cash-flow/category math** (it is not a Transaction).
+- **Category** — id, userId?, name, parentId?, icon, color, kind (`INCOME|EXPENSE`). Seeded defaults + user-custom. No "Subscriptions" category — recurring costs are Subscriptions, not transactions.
+- **Subscription** — id, userId, name, amountCents, cadence (`MONTHLY|ANNUAL|WEEKLY|QUARTERLY`), nextChargeDate, categoryId, status (`ACTIVE|PAUSED|CANCELED`), createdAt. Single source of truth for its recurring cost; never also a Transaction.
+- **Holding** (investments) — id, userId, name, ticker?, assetType (`STOCK|ETF|CRYPTO`), quantity, avgCostCents, currentPriceCents (static mock), createdAt.
+- **OtherAsset** (non-cash, non-market) — id, userId, name, type (`RETIREMENT|REAL_ESTATE|VEHICLE|OTHER`), valueCents, lastUpdated.
+- **Liability** (debts) — id, userId, name, type (`CREDIT_CARD|STUDENT_LOAN|MORTGAGE|AUTO_LOAN|PERSONAL_LOAN|OTHER`), balanceCents, aprBps?, minPaymentCents?, originalAmountCents?, lastUpdated.
+- **NetWorthSnapshot** — id, userId, date, totalAssetsCents, totalDebtsCents, netWorthCents. One row per user per month (unique `userId`+month); current month is upserted on dashboard view. Seeded historically for the demo user; for real users history accrues going forward (no backfill). See ADR-0001.
 
+### Money-math rules (must be exact)
+1. All amounts are integer cents; render with currency formatting only at the edge.
+2. **Net worth** = Σ(Account current balance) + Σ(Holding.quantity × Holding.currentPriceCents) + Σ(OtherAsset.valueCents) − Σ(Liability.balanceCents). The four entity types are disjoint, so each value is counted exactly once (no double-counting by construction).
+3. **Income (month)** = Σ positive transactions in the period. **Expenses (month)** = Σ |negative| expense transactions in the period **+** Σ normalized-monthly cost of *active* Subscriptions (smoothed; counted once, never also a transaction). **Net cash flow** = income − expenses.
+4. **Subscription normalized monthly** = amount × (cadence→monthly factor): weekly ×52/12, monthly ×1, quarterly ×1/3, annual ×1/12.
+5. Category totals (for the active period, across every view) = Σ that category's transactions + the normalized-monthly cost of active Subscriptions in that category.
+6. **Transfers** move money between Accounts and are excluded from income, expenses, net cash flow, and category totals — they change Account balances only, never net worth.
+7. **Period semantics:** current-month KPIs are **month-to-date** (labeled "MTD"). Month-over-month comparisons and insights ("vs last month", improving/declining) use the **last complete month vs the month before it** — never the partial current month. Net-worth "vs last month" uses monthly snapshots.
+8. **Account balance is derived:** currentBalance = openingBalanceCents + Σ(transaction amountCents on the account) − Σ(transfers out) + Σ(transfers in). Balances, cash, and net worth therefore reconcile to the penny by construction.
 
----
-
-## 14. Risks & mitigations
-
-- **Scope creep into a real fintech** → strict non-goals (§4) and placeholders for anything bank/market/payment related.
-- **Hardcoded-dashboard temptation** → all metrics routed through `lib/finance` pure functions with unit tests (S3 gate).
-- **Demo data feels fake** → curate realistic amounts/cadence, 6 months of history, coherent net-worth trend.
-- **Currency/decimal bugs** → integer-minor-units/Decimal storage + centralized formatting.
-- **Responsive breakage** → mobile-first build + explicit breakpoint QA milestone.
+> **A-note (double-counting): resolved.** Cash lives only in `Account`, investments only in `Holding`, other owned items only in `OtherAsset`, and debts only in `Liability`. These sets are disjoint, so net worth sums each value exactly once by construction. A reconciliation unit test guards it.
 
 ---
 
-## 15. Open questions
+## 8. Seed data requirements
 
-All initial open questions are **resolved** (see §13 Key decisions):
+A realistic single demo user (`demo@financehub.app`) with:
+- 2–4 cash **Accounts** (checking/savings/cash).
+- ~12 months of transactions (a few hundred), with believable payees, salary deposits, and seasonality.
+- 6–10 **Subscriptions** of mixed cadence.
+- 3–5 **Holdings** (stocks/ETFs/crypto, static mock prices) and 2–4 **Other Assets**.
+- 2–4 **Liabilities** (debts).
+- 12 monthly **NetWorthSnapshots** showing a generally improving (but non-monotonic) trend.
 
-1. ~~Period selector~~ → **Resolved:** flexible range with presets (This month default).
-2. ~~Accounts model~~ → **Resolved:** first-class `Account` entity; transactions require an account; accounts double as cash assets.
-3. ~~Net worth snapshot cadence~~ → **Resolved:** no snapshots; net worth trend computed live from balances + transaction cash flow.
-4. ~~Landing pricing tiers~~ → **Resolved:** none; the product is free.
-
-*No open questions remain. New questions surfaced during the build will be logged here.*
-
----
-
-## 16. FAQ
-
-**Is this connected to my real bank?** No — Finance Hub is self-entered (or demo) data by design. Bank connections are explicitly out of scope.
-
-**Are the stock/crypto prices live?** No — prices are realistic mock values stored in the app, so the portfolio behaves like a real tracker without a market-data dependency.
-
-**What does it cost?** Nothing — Finance Hub is free, with no plans or payment in the MVP.
-
-**Does it handle multiple currencies?** You pick one display currency in Settings. There's no FX conversion in the MVP.
-
-**Will my data persist?** Yes — everything you create is saved to Postgres and tied to your account.
-
-**Is it secure enough for real money decisions?** It's a demo-quality MVP, not an audited financial product. No compliance/security guarantees — by design.
+Seed must be deterministic and runnable via a single command. In addition to the seeded demo user, any user can **"Load demo data"** to populate their own empty workspace and **"Clear all data"** to wipe it (confirm dialog) — demo records are normal data with no provenance flag.
 
 ---
 
-## 17. Appendix — reference lists
+## 9. UX & design direction
 
-- **Transaction categories:** Salary, Rent, Groceries, Restaurants, Transport, Shopping, Subscriptions, Investments, Travel, Health, Utilities, Insurance, Other.
-- **Asset types:** checking, savings, cash, stocks, ETFs, crypto, retirement, property, other.
-- **Liability types:** credit card, car loan, student loan, mortgage, personal loan, other.
-- **Billing cycles:** weekly, monthly, quarterly, yearly.
-- **Investment asset types:** stock, ETF, crypto.
+- **Tone:** calm, premium, confidence-inspiring. Mint/Monarch/Copilot energy — not a SaaS admin table.
+- Generous whitespace, strong numeric typography, restrained color; semantic color only for up/down/positive/negative.
+- Light + dark mode.
+- Every list/chart has explicit **loading, empty, and error** states.
+- Charts: net worth line, spending donut/bar, cash-flow bars. Accessible (labels, not color-only).
+- Fast perceived performance: skeletons, optimistic edits where safe.
+- Accessibility: keyboard navigable, focus states, ARIA on interactive controls, sufficient contrast.
 
+---
+
+## 10. Technical requirements
+
+- **Framework:** Next.js (App Router), TypeScript, Server Components for data fetching; Server Actions or route handlers for mutations.
+- **DB/ORM:** Postgres + Prisma. Migrations checked in.
+- **UI:** Tailwind + shadcn/ui; a charting lib (e.g., Recharts/visx).
+- **Auth:** email/password (e.g., Auth.js/NextAuth credentials) with hashed passwords; protected routes; per-user data scoping on every query.
+- **Architecture:** dedicated domain/aggregation layer (money math, net worth, summaries) separate from UI; no duplicated business logic in components.
+- **Quality:** typed end-to-end; lint + typecheck clean; a handful of unit tests for the money-math functions.
+- **Setup:** one documented path from clone → install → migrate → seed → run.
+
+---
+
+## 11. Acceptance criteria (v1 "done")
+
+- [ ] User can sign up / log in; all data is scoped to the user.
+- [ ] Dashboard shows Net Worth, Cash In, Cash Out, Net Cash Flow, net-worth trend, spending breakdown, recent transactions, upcoming subscriptions, and an up/down signal — above the fold on desktop.
+- [ ] Transactions: list with search + filters; create/edit/delete; recategorize; totals stay consistent everywhere.
+- [ ] Spending view: month switcher; category breakdown with MoM comparison; top payees.
+- [ ] Subscriptions: list with cadence, next charge, status; correct normalized monthly + annual totals; counted into expenses once, never duplicated as transactions.
+- [ ] Accounts, Holdings, Other Assets, and Liabilities: full CRUD; each rolls into net worth exactly once.
+- [ ] Transfers between accounts adjust both balances and never affect income, expenses, cash flow, or net worth.
+- [ ] Account balances are derived (opening balance + activity) and reconcile to the penny.
+- [ ] Net Worth: equals assets − debts everywhere; 12-month trend renders from snapshots.
+- [ ] Insights: at least 4 rule-based insights + an overall health signal.
+- [ ] Seed command produces the section-8 dataset; app runs clean from a fresh clone.
+- [ ] Light + dark mode; loading/empty/error states; basic a11y pass.
+- [ ] All money math validated by unit tests.
+
+---
+
+## 12. Milestones
+
+1. **M0 — Foundation:** Next.js app, Prisma schema, auth, seed script, layout/nav shell.
+2. **M1 — Data & money core:** Transactions CRUD + aggregation layer + money-math tests.
+3. **M2 — Dashboard:** KPI cards, net-worth trend, spending breakdown, recent activity.
+4. **M3 — Modules:** Subscriptions, Assets, Debts, Net Worth views.
+5. **M4 — Insights + polish:** rule-based insights, empty/error states, dark mode, a11y, design pass.
+6. **M5 (fast-follow):** light AI monthly summary; CSV import.
+
+---
+
+## 13. Risks & mitigations
+
+| Risk | Mitigation |
+|------|------------|
+| Double-counting in net worth | Disjoint entities (Account=cash, Holding=investments, OtherAsset=other, Liability=debts) — each value counted once; reconciliation unit test |
+| Float rounding errors in money | Integer cents everywhere; format only at render |
+| "Admin panel" feel instead of premium | Explicit design direction (§9) + design review gate in success criteria |
+| Scope creep (budgets, AI, Plaid) | Hard non-goals (§2); P2 fast-follow lane |
+| Ambiguity hurts benchmark fairness | Executable acceptance criteria (§11) + deterministic seed (§8) |
+
+---
+
+## 14. Future / out-of-scope backlog
+
+Plaid/Teller live aggregation · budgeting & goals · AI chat + recommendations · multi-currency + FX · CSV/OFX import · shared household accounts · mobile-native apps · Stripe premium tier · investment live pricing · alerts/notifications.
