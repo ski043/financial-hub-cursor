@@ -6,13 +6,13 @@
 | **Author** | janmarshal (with AI pairing) |
 | **Status** | Resolved |
 | **Severity** | Low — no shipped impact; caught during the session, fully reverted |
-| **Scope** | Initial Finance Hub frontend work (first feature build after scaffold) |
+| **Scope** | Initial finance bro frontend work (first feature build after scaffold) |
 
 ---
 
 ## Summary
 
-The task was to **build the public landing page** for Finance Hub. The agent
+The task was to **build the public landing page** for finance bro. The agent
 misread "home page" as the **in-app Overview Dashboard** and built a full data +
 domain layer plus dashboard view model before the user stopped it. All of that
 work was reverted, and the actual landing page was then built, verified, and

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Finance Hub",
+  title: "finance bro",
   description:
     "Your entire financial life — income, spending, subscriptions, assets, debts, investments, and net worth — in one calm, modern dashboard.",
 };

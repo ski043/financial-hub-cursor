@@ -4,7 +4,7 @@ import { AuthShell } from "@/components/auth/auth-shell";
 import { SignupForm, SignupFooter } from "@/components/auth/signup-form";
 
 export const metadata: Metadata = {
-  title: "Create account — Finance Hub",
+  title: "Create account — finance bro",
 };
 
 export default function SignupPage() {

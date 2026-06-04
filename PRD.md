@@ -1,4 +1,4 @@
-# Finance Hub — Product Requirements Document
+# finance bro — Product Requirements Document
 
 > **“Your complete financial life in one dashboard.”**
 
@@ -229,7 +229,7 @@ Authoritative entity sketch. Money stored as integer **minor units (cents)** to 
 
 ## 8. Seed data requirements
 
-A realistic single demo user (`demo@financehub.app`) with:
+A realistic single demo user (`demo@financebro.app`) with:
 - 2–4 cash **Accounts** (checking/savings/cash).
 - ~12 months of transactions (a few hundred), with believable payees, salary deposits, and seasonality.
 - 6–10 **Subscriptions** of mixed cadence.

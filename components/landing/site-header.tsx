@@ -22,7 +22,7 @@ export function SiteHeader() {
           <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <PieChart className="size-4" />
           </span>
-          Finance Hub
+          finance bro
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">

@@ -1,4 +1,4 @@
-# Finance Hub
+# finance bro
 
 Your complete financial life in one dashboard — net worth, cash flow, spending, subscriptions, assets, and debts. See [PRD.md](PRD.md) for the product spec and [CONTEXT.md](CONTEXT.md) for the domain language.
 
@@ -43,7 +43,7 @@ npm run db:migrate
 npm run db:seed
 ```
 
-Creates `demo@financehub.app` / `demo-password-123`.
+Creates `demo@financebro.app` / `demo-password-123`.
 
 ### 5. Run the dev server
 

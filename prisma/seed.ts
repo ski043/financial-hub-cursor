@@ -3,7 +3,7 @@ import "dotenv/config";
 import { auth } from "../lib/auth";
 import { prisma } from "../lib/db";
 
-const DEMO_EMAIL = "demo@financehub.app";
+const DEMO_EMAIL = "demo@financebro.app";
 const DEMO_PASSWORD = "demo-password-123";
 const DEMO_NAME = "Demo User";
 

@@ -91,7 +91,7 @@ const steps = [
 
 const faqs = [
   {
-    q: "Does Finance Hub connect to my bank?",
+    q: "Does finance bro connect to my bank?",
     a: "Not in this version. You add accounts and transactions manually, or load realistic demo data to explore. No bank credentials, ever.",
   },
   {
@@ -189,7 +189,7 @@ export default function LandingPage() {
               </h2>
               <p className="mt-3 text-muted-foreground">
                 Your money lives in fragments — accounts, cards, brokerages, and
-                buried receipts. Finance Hub answers the basics without a
+                buried receipts. finance bro answers the basics without a
                 spreadsheet.
               </p>
             </div>
@@ -388,10 +388,10 @@ export default function LandingPage() {
             <span className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <PieChart className="size-3.5" />
             </span>
-            Finance Hub
+            finance bro
           </div>
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Finance Hub. Your money, in focus.
+            © {new Date().getFullYear()} finance bro. Your money, in focus.
           </p>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <Link href="#features" className="transition-colors hover:text-foreground">
