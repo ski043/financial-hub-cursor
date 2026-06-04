@@ -33,7 +33,7 @@ export function AuthShell({
           <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <PieChart className="size-4" />
           </span>
-          Finance Hub
+          finance bro
         </Link>
 
         <div className="text-center">

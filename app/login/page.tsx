@@ -5,7 +5,7 @@ import { AuthShell } from "@/components/auth/auth-shell";
 import { LoginForm, LoginFooter } from "@/components/auth/login-form";
 
 export const metadata: Metadata = {
-  title: "Sign in — Finance Hub",
+  title: "Sign in — finance bro",
 };
 
 export default function LoginPage() {

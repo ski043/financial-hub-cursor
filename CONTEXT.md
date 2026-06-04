@@ -1,6 +1,6 @@
-# Finance Hub
+# finance bro
 
-The ubiquitous language for Finance Hub — a personal finance dashboard where a person tracks their income, spending, subscriptions, accounts, investments, debts, and net worth. This file is a glossary only; it holds no implementation details.
+The ubiquitous language for finance bro — a personal finance dashboard where a person tracks their income, spending, subscriptions, accounts, investments, debts, and net worth. This file is a glossary only; it holds no implementation details.
 
 ## Language
 

@@ -5,7 +5,7 @@ import { requireSession } from "@/lib/auth-guard";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 
 export const metadata: Metadata = {
-  title: "Dashboard — Finance Hub",
+  title: "Dashboard — finance bro",
 };
 
 export default async function DashboardPage() {
@@ -19,7 +19,7 @@ export default async function DashboardPage() {
             <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <PieChart className="size-4" />
             </span>
-            Finance Hub
+            finance bro
           </div>
           <SignOutButton />
         </div>
